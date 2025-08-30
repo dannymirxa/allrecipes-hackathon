@@ -23,7 +23,7 @@ async def get_ingredients_cooccurrence(
         ...,
         min_length=2,
         max_length=50,
-        regex="^[a-zA-Z -]*$",
+        pattern="^[a-zA-Z -]*$",
         description="The ingredient to find co-occurrences for."
     )
 ):

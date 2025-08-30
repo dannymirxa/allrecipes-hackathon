@@ -13,6 +13,6 @@ COPY router/*.py router/
 COPY schemas/*.py schemas/
 COPY *.py .
 
-EXPOSE 8000
+EXPOSE 8001
 
 CMD ["python", "server.py"]
