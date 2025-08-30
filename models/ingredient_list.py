@@ -1,7 +1,10 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
-from database_setup import database
+from sqlalchemy.ext.declarative import declarative_base
 
-class ingredientList(database.Base):
+base = declarative_base()
+
+class ingredientList(base):
+
     __tablename__ = "ingredient_list"
 
     id = Column(Integer, primary_key=True, index=True)

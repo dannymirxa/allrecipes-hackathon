@@ -1,64 +1,121 @@
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-import pandas as pd
-
+import re
 
 from schemas.ingredients import RecipeWrapper
-from recipes_normalized import df_recipes, df_ingredients
+from modules.recipes_normalized import load_and_normalize_data
 
-def find_similar_recipes(input_recipe: RecipeWrapper, df_recipes: pd.DataFrame, df_ingredients: pd.DataFrame, top_n=5):
-    # Combine title and ingredients for each recipe
-    df_combined = df_recipes.copy()
-    ingredients_grouped = df_ingredients.groupby('recipe_id')['ingredient'].apply(lambda x: ', '.join(x))
-    df_combined = df_combined.merge(ingredients_grouped, left_on='id', right_index=True, how='left')
-    df_combined['combined_text'] = df_combined['title'].fillna('') + ': ' + df_combined['ingredient'].fillna('')
-    
-    # Prepare input recipe text
-    input_text = input_recipe.recipe.name + ', ' + ' '.join([f"{ing.quantity} {ing.name}, " for ing in input_recipe.recipe.ingredients])
-    
-    # Vectorize
-    vectorizer = TfidfVectorizer()
-    vectors = vectorizer.fit_transform(df_combined['combined_text'].tolist() + [input_text])
-    
-    # Compute similarity
-    cosine_sim = cosine_similarity(vectors[-1], vectors[:-1]).flatten()
-    
-    # Get top matches
-    top_indices = cosine_sim.argsort()[-top_n:][::-1]
-    duplicates = [{"name": df_combined.iloc[i]['title'], "similarity": round(float(cosine_sim[i]), 2)} for i in top_indices]
-    
-    return {"duplicates": duplicates}
+def normalize_ingredient_name(ingredient: str) -> str:
+    # cleans and normalizes a raw ingredient string.
+    text = ingredient.lower()
+    text = re.sub(r"[^a-z\s-]", "", text)
+    units_stopwords = r"\b(cup|cups|c|tablespoon|tablespoons|tbsp|teaspoon|teaspoons|tsp|ounce|ounces|oz|package|pkg|fluid|fl|pound|pounds|lb|slice|slices|or|as|needed|and|to|taste|chopped|diced|minced|sliced)\b"
+    text = re.sub(units_stopwords, "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
-# input_recipe = {
-#                 "recipe": {
-#                     "name": "Cinnamon Bun Bread",
-#                     "description": "A moist and delicious cinnamon bun bread that's quick and easy to make.",
-#                     "ingredients": [
-#                         {"name": "all-purpose flour", "quantity": "3 cups"},
-#                         {"name": "baking powder", "quantity": "1 tablespoon"},
-#                         {"name": "salt", "quantity": "1/4 teaspoon"},
-#                         {"name": "white sugar", "quantity": "1 cup"},
-#                         {"name": "milk", "quantity": "1 1/2 cups"},
-#                         {"name": "egg", "quantity": "1"},
-#                         {"name": "vegetable oil", "quantity": "1/3 cup"},
-#                         {"name": "vanilla extract", "quantity": "2 teaspoons"},
-#                         {"name": "brown sugar", "quantity": "1 cup"},
-#                         {"name": "ground cinnamon", "quantity": "2 tablespoons"},
-#                         {"name": "butter", "quantity": "1/2 cup"}
-#                     ]
-#                     }
-#                 }
+class RecipeSimilarityModel:
+    # A class to manage the recipe similarity model, including one-time data processing and efficient searching.
+    def __init__(self, df_recipes: pd.DataFrame, df_ingredients: pd.DataFrame):
+        self.df_recipes = df_recipes
+        self.df_ingredients = df_ingredients
+        
+        self._prepare_data()
+        self.vectorizer = TfidfVectorizer(stop_words='english')
+        self.tfidf_matrix = self._fit_vectorizer()
 
-# from schemas.ingredients import (
-#     IngredientCooccurrence,
-#     RecipesDuplicates,
-#     Recipe,
-#     RecipeWrapper
-# )
-# print(RecipeWrapper.model_validate(input_recipe))
-# result = find_similar_recipes(input_recipe, df_recipes, df_ingredients)
-# print(RecipesDuplicates.model_validate({'duplicates': [{'name': 'Cinnamon Swirl Bread', 'similarity': 0.66}, {'name': 'Cinnamon Bread I', 'similarity': 0.65}, {'name': 'Cinnamon Sugar Cookies', 'similarity': 0.64}, {'name': 'Cinnamon Lemon Cookies', 'similarity': 0.63}, {'name': 'Easy Apple Cinnamon Muffins', 'similarity': 0.63}]}))
-# print(result)
+    def _prepare_data(self):
+        # Pre-processes the recipe data to create a combined text field for TF-IDF.
+        # This includes normalizing ingredients and combining title, description,
+        # and ingredients.
+
+        # normalize ingredients for all recipes
+        self.df_ingredients['norm_ingredient'] = self.df_ingredients['ingredient'].apply(normalize_ingredient_name)
+        
+        # group normalized ingredients by recipe
+        ingredients_grouped = self.df_ingredients.groupby('recipe_id')['norm_ingredient'].apply(lambda x: ' '.join(x))
+        
+        # Merge ingredients back into the main recipes dataframe
+        self.df_recipes = self.df_recipes.merge(ingredients_grouped, left_on='id', right_index=True, how='left')
+        
+        # Create a single text field with all relevant info (title, description, ingredients)
+        self.df_recipes['combined_text'] = (
+            self.df_recipes['title'].fillna('') + ' ' +
+            self.df_recipes['description'].fillna('') + ' ' +
+            self.df_recipes['norm_ingredient'].fillna('')
+        )
+    
+    def _fit_vectorizer(self):
+
+        # Fits the TfidfVectorizer on the entire dataset's combined text.
+        # This defines the vocabulary of the model.
+
+        return self.vectorizer.fit_transform(self.df_recipes['combined_text'])
+
+    def find_similar_recipes(self, input_recipe: RecipeWrapper, top_n: int = 5) -> dict:
+        # Finds the top N most similar recipes for a given input recipe.
+
+        # 1. prepare the input recipe's text using the same normalization
+        input_ingredients = ' '.join([normalize_ingredient_name(ing.name) for ing in input_recipe.recipe.ingredients])
+        input_text = (
+            input_recipe.recipe.name + ' ' +
+            input_recipe.recipe.description + ' ' +
+            input_ingredients
+        )
+        
+        # 2. transform the input text using the PRE-FITTED vectorizer
+        input_vector = self.vectorizer.transform([input_text])
+        
+        # 3. compute cosine similarity against the pre-computed matrix
+        cosine_sim = cosine_similarity(input_vector, self.tfidf_matrix).flatten()
+        
+        # 4. get the top N matches
+        # sort the indices of the similarity scores in descending order
+        top_indices = cosine_sim.argsort()[-top_n:][::-1]
+        
+        duplicates = [{
+            "name": self.df_recipes.iloc[i]['title'],
+            "similarity": round(float(cosine_sim[i]), 2)
+        } for i in top_indices]
+        
+        return {"duplicates": duplicates}
+
+# if __name__ == "__main__":
+
+    # all_dataframes = load_and_normalize_data("allrecipes.com_database_12042020000000.json")
+    # df_recipes = all_dataframes["recipes"]
+    # df_ingredients = all_dataframes["ingredients"]
+
+    # similarity_model = RecipeSimilarityModel(df_recipes, df_ingredients)
+
+    # input_recipe_data = {
+    #     "recipe": {
+    #         "name": "Cinnamon Bun Bread",
+    #         "description": "A moist and delicious cinnamon bun bread that's quick and easy to make.",
+    #         "ingredients": [
+    #             {"name": "all-purpose flour", "quantity": "3 cups"},
+    #             {"name": "baking powder", "quantity": "1 tablespoon"},
+    #             {"name": "salt", "quantity": "1/4 teaspoon"},
+    #             {"name": "white sugar", "quantity": "1 cup"},
+    #             {"name": "milk", "quantity": "1 1/2 cups"},
+    #             {"name": "egg", "quantity": "1"},
+    #             {"name": "vegetable oil", "quantity": "1/3 cup"},
+    #             {"name": "vanilla extract", "quantity": "2 teaspoons"},
+    #             {"name": "brown sugar", "quantity": "1 cup"},
+    #             {"name": "ground cinnamon", "quantity": "2 tablespoons"},
+    #             {"name": "butter", "quantity": "1/2 cup"}
+    #         ]
+    #     }
+    # }
+
+    # input_recipe = RecipeWrapper.model_validate(input_recipe_data)
+
+    # result = similarity_model.find_similar_recipes(input_recipe)
+    
+    # import json
+    # print("\n--- API Result for Similar Recipes ---")
+    # print(json.dumps(result, indent=2))
