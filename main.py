@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
-from modules.ingredient_cooccurance_count import precompute_cooccurrences
-from modules.recipe_similarity_search import RecipeSimilarityModel
+from modules.ingredient_cooccurance import precompute_cooccurrences
+from modules.recipes_similarity import RecipeSimilarityModel
 from modules.recipes_normalized import load_and_normalize_data
 
 from router.ingredients_router import router

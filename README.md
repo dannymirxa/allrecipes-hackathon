@@ -42,20 +42,22 @@ The server will be available at `http://localhost:8000`.
 
 - **URL:** `/api/ingredient-cooccurrence`
 - **Method:** `GET`
-- **Query Parameter:** `ingredient` (string, required)
-  
+- **Query Parameter:** `ingredient` (string, required, 2-50 characters, alphabetic, spaces, and hyphens allowed)
+
+Description: Retrieves the top 10 co-occurring ingredients for a specified ingredient by analyzing available recipes. It utilizes a pre-computed map for fast access.
+
 Example:
 ```bash
 curl -X 'GET' 'http://localhost:8000/api/ingredient-cooccurrence?ingredient=cinnamon'
 ```
-
-Description: Retrieves the top 10 co-occurring ingredients for a specified ingredient by analyzing available recipes.
 
 #### **Recipe Duplicates**
 
 - **URL:** `/api/recipe-duplicates`
 - **Method:** `POST`
 - **Request Body:** JSON object conforming to `RecipeWrapper` schema
+
+Description: Finds and returns a list of up to 5 recipes with the highest similarity scores to the provided recipe using cosine similarity on TF-IDF vectors.
 
 Example:
 ```bash
@@ -72,8 +74,6 @@ curl -X 'POST' 'http://localhost:8000/api/recipe-duplicates' \
     }
 }'
 ```
-
-Description: Finds and returns a list of up to 5 recipes with the highest similarity scores to the provided recipe using cosine similarity on TF-IDF vectors.
 
 ## Contributors
 

@@ -7,8 +7,8 @@ from schemas.ingredients import (
     RecipeWrapper
 )
 # Import the lookup functions, not the processing functions
-from modules.ingredient_cooccurance_count import get_top_cooccurring
-from modules.recipe_similarity_search import RecipeSimilarityModel
+from modules.ingredient_cooccurance import get_top_cooccurring
+from modules.recipes_similarity import RecipeSimilarityModel
 
 router = APIRouter(prefix="/api")
 
@@ -31,13 +31,12 @@ async def get_ingredients_cooccurrence(
     Provides a top 10 list of ingredients commonly used with a specified ingredient.
     """
     try:
-        # Access the pre-computed map from the application state
+        # access the pre-computed map from the application state
         cooccurrence_map = request.app.state.cooccurrence_map
         
-        # The lookup function is now very fast
         result_dict = get_top_cooccurring(ingredient, cooccurrence_map)
         
-        # Handle the edge case where the ingredient is not found
+        # handle the edge case where the ingredient is not found
         if not result_dict["cooccurrence"]:
              raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -47,7 +46,7 @@ async def get_ingredients_cooccurrence(
         return IngredientCooccurrence.model_validate(result_dict)
     
     except Exception as e:
-        # Generic error handler for any unexpected issues
+        # generic error handler for any unexpected issues
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred: {e}"
