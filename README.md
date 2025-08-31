@@ -61,12 +61,22 @@ The AllRecipes API is a robust system for analyzing recipe data, focusing on ing
    cd allrecipes-api
    ```
 
-2. Start the Docker container:
+2. Download the AllRecipes dataset:
+   ```bash
+   wget https://archive.org/download/allrecipes.com_recipes_12042020000000/allrecipes.com_database_12042020000000.zip
+   ```
+
+3. Extract the dataset:
+   ```bash
+   unzip allrecipes.com_database_12042020000000.zip
+   ```
+
+4. Start the Docker container:
    ```bash
    docker compose up -d
    ```
 
-3. Access the API at `http://localhost:8001`.
+5. Access the API at `http://localhost:8001`.
 
 ## API Endpoints
 
