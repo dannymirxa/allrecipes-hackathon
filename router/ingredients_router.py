@@ -1,12 +1,10 @@
-# ingredients.py (in api/ folder)
-
 from fastapi import APIRouter, HTTPException, Query, status, Request
 from schemas.ingredients import (
     IngredientCooccurrence,
     RecipesDuplicates,
     RecipeWrapper
 )
-# Import the lookup functions, not the processing functions
+
 from modules.ingredient_cooccurance import get_top_cooccurring
 from modules.recipes_similarity_search import RecipeSimilarityModel
 
