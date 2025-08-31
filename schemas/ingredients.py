@@ -1,8 +1,4 @@
-from datetime import datetime, date
-from typing import Optional
-from decimal import Decimal
-from typing import Optional
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel
 from typing import List
 
 class Cooccurrence(BaseModel):
@@ -31,6 +27,3 @@ class Recipe(BaseModel):
 
 class RecipeWrapper(BaseModel):
     recipe: Recipe
-
-class ErrorMessage(BaseModel):
-    error: str

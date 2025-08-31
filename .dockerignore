@@ -1,0 +1,5 @@
+.dockerignore
+recipes
+modules_test
+.gitignore
+commands.txt
