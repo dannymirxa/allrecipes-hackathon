@@ -30,12 +30,14 @@ async def client():
     async with httpx.AsyncClient(base_url="http://localhost:8001") as client:
         yield client
 
+c
 @pytest.mark.asyncio
 async def test_get_ingredients_cooccurrence_true(client):
     response = await client.get("/api/ingredient-cooccurrence?ingredient=cinnamon")
     assert response.status_code == 200
     assert is_valid_ingredient_cooccurrence(response.json()) == True
 
+# test get_ingredients_cooccurrence with input with wrong schema
 @pytest.mark.asyncio
 async def test_get_ingredients_cooccurrence_false_number(client):
     response = await client.get("/api/ingredient-cooccurrence?ingredient=cinnamon123")
@@ -43,6 +45,7 @@ async def test_get_ingredients_cooccurrence_false_number(client):
     assert is_valid_ingredient_cooccurrence(response.json()) == False
     assert response.json() == {'detail': [{'type': 'string_pattern_mismatch', 'loc': ['query', 'ingredient'], 'msg': "String should match pattern '^[a-zA-Z -]*$'", 'input': 'cinnamon123', 'ctx': {'pattern': '^[a-zA-Z -]*$'}}]}
 
+# test get_ingredients_cooccurrence with non existant input
 @pytest.mark.asyncio
 async def test_get_ingredients_cooccurrence_false_no_ingredient(client):
     response = await client.get("/api/ingredient-cooccurrence?ingredient=cinnamo")
@@ -50,6 +53,7 @@ async def test_get_ingredients_cooccurrence_false_no_ingredient(client):
     assert is_valid_ingredient_cooccurrence(response.json()) == False
     assert response.json() == {'detail': "An unexpected error occurred: 404: Ingredient 'cinnamo' not found or has no co-occurring ingredients."}
 
+# test get_similar_recipes with correct input
 @pytest.mark.asyncio
 async def test_get_similar_recipes_true(client):
     request_payload = {
