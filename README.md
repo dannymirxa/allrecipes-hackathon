@@ -72,9 +72,41 @@ The AllRecipes API is a robust system for analyzing recipe data, focusing on ing
 
 - **GET /api/ingredient-cooccurrence**: Retrieve top co-occurring ingredients.
   - **Query Parameters**: `ingredient` (string, required).
+    **Example**: 
+    ```bash
+    curl -X 'GET' \
+    'http://localhost:8001/api/ingredient-cooccurrence?ingredient=cinnamon' \
+    -H 'accept: application/json'
+    ```
 
 - **POST /api/recipe-duplicates**: Identify similar recipes.
   - **Payload**: Recipe JSON.
+    - **Example**:
+    ```bash
+    curl -X 'POST' \
+    'http://localhost:8001/api/recipe-duplicates' \
+    -H 'accept: application/json' \
+    -H 'Content-Type: application/json' \
+    -d '{
+          "recipe": {
+              "name": "Cinnamon Bun Bread",
+              "description": "A moist and delicious cinnamon bun bread that'\''s quick and easy to make.",
+              "ingredients": [
+                  {"name": "all-purpose flour", "quantity": "3 cups"},
+                  {"name": "baking powder", "quantity": "1 tablespoon"},
+                  {"name": "salt", "quantity": "1/4 teaspoon"},
+                  {"name": "white sugar", "quantity": "1 cup"},
+                  {"name": "milk", "quantity": "1 1/2 cups"},
+                  {"name": "egg", "quantity": "1"},
+                  {"name": "vegetable oil", "quantity": "1/3 cup"},
+                  {"name": "vanilla extract", "quantity": "2 teaspoons"},
+                  {"name": "brown sugar", "quantity": "1 cup"},
+                  {"name": "ground cinnamon", "quantity": "2 tablespoons"},
+                  {"name": "butter", "quantity": "1/2 cup"}
+              ]
+          }
+      }'
+    ```
 
 ## Testing
 
