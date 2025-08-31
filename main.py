@@ -2,11 +2,12 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
 from modules.ingredient_cooccurance import precompute_cooccurrences
-from modules.recipes_similarity import RecipeSimilarityModel
+from modules.recipes_similarity_search import RecipeSimilarityModel
 from modules.recipes_normalized import load_and_normalize_data
 
 from router.ingredients_router import router
 
+# this is needed to initialize the heavy resources ONCE
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # load and normalize the raw data once
@@ -14,7 +15,7 @@ async def lifespan(app: FastAPI):
     df_recipes = all_dataframes["recipes"]
     df_ingredients = all_dataframes["ingredients"]
     
-    # pre-compute the co-occurrence map once
+    # compute the co-occurrence map once
     app.state.cooccurrence_map = precompute_cooccurrences(df_ingredients)
     
     # initialize the similarity model once

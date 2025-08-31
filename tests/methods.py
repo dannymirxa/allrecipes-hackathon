@@ -39,33 +39,33 @@ import asyncio
 
 # asyncio.run(test_get_ingredients_cooccurrence())
 
-# request_payload = {
-#         "recipe": {
-#             "name": 0,
-#             "description": "A moist and delicious cinnamon bun bread that's quick and easy to make.",
-#             "ingredients": [
-#                 {"name": "all-purpose flour", "quantity": "3 cups"}
-#             ]
-#         }}
-
-request_payload = """{
+request_payload = {
         "recipe": {
-            "name": "A moist and delicious cinnamon bun bread that's quick and easy to make.",
+            "name": 0,
             "description": "A moist and delicious cinnamon bun bread that's quick and easy to make.",
             "ingredients": [
                 {"name": "all-purpose flour", "quantity": "3 cups"}
             ]
-        }
-    }"""
+        }}
+
+# request_payload = """{
+#         "recipe": {
+#             "name": "A moist and delicious cinnamon bun bread that's quick and easy to make.",
+#             "description": "A moist and delicious cinnamon bun bread that's quick and easy to make.",
+#             "ingredients": [
+#                 {"name": "all-purpose flour", "quantity": "3 cups"}
+#             ]
+#         }
+#     }"""
 
 async def test_get_similar_recipes():
     client_instance = await create_client()
     # print(json.loads(request_payload))
     try:
         response = await client_instance.get("/api/recipe-duplicates", 
-                                            #   json=request_payload,
-                                                data=request_payload,
-                                                headers={"Content-Type": "application/json"}
+                                              json=request_payload,
+                                                # data=request_payload,
+                                                # headers={"Content-Type": "application/json"}
                                               )
         print(response.status_code)
         # print(RecipesDuplicates.model_validate(response.json()))

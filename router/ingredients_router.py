@@ -8,30 +8,26 @@ from schemas.ingredients import (
 )
 # Import the lookup functions, not the processing functions
 from modules.ingredient_cooccurance import get_top_cooccurring
-from modules.recipes_similarity import RecipeSimilarityModel
+from modules.recipes_similarity_search import RecipeSimilarityModel
 
 router = APIRouter(prefix="/api")
 
-@router.get(
-    "/ingredient-cooccurrence",
-    response_model=IngredientCooccurrence,
-    summary="Get Top Co-occurring Ingredients"
-)
+@router.get("/ingredient-cooccurrence", response_model=IngredientCooccurrence, summary="Get Top Co-occurring Ingredients")
 async def get_ingredients_cooccurrence(
-    request: Request,
-    ingredient: str = Query(
-        ...,
-        min_length=2,
-        max_length=50,
-        pattern="^[a-zA-Z -]*$",
-        description="The ingredient to find co-occurrences for."
-    )
-):
+        request: Request,
+        ingredient: str = Query(
+            ...,
+            min_length=2,
+            max_length=50,
+            pattern="^[a-zA-Z -]*$",
+            description="The ingredient to find co-occurrences for."
+        )
+    ):
     """
     Provides a top 10 list of ingredients commonly used with a specified ingredient.
     """
     try:
-        # access the pre-computed map from the application state
+        # access the computed map from the application state
         cooccurrence_map = request.app.state.cooccurrence_map
         
         result_dict = get_top_cooccurring(ingredient, cooccurrence_map)
@@ -52,27 +48,21 @@ async def get_ingredients_cooccurrence(
             detail=f"An unexpected error occurred: {e}"
         )
 
-@router.post(
-    "/recipe-duplicates",
-    response_model=RecipesDuplicates,
-    summary="Find Similar Recipes"
-)
+@router.post("/recipe-duplicates", response_model=RecipesDuplicates, summary="Find Similar Recipes")
 async def get_similar_recipes(request: Request, recipe: RecipeWrapper):
     """
-    Accepts a recipe payload and returns a top 5 list of similar recipes
-    from the database.
+    Accepts a recipe payload and returns a top 5 list of similar recipes from the database.
     """
     try:
-        # Access the pre-initialized model from the application state
+        # access the pre-initialized model from the application state
         similarity_model: RecipeSimilarityModel = request.app.state.similarity_model
         
-        # The find_similar_recipes method is now very fast
+        # get similar recipes from find_similar_recipes method
         similar_recipes = similarity_model.find_similar_recipes(recipe)
         
         return RecipesDuplicates.model_validate(similar_recipes)
         
     except Exception as e:
-        # Generic error handler
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred: {e}"

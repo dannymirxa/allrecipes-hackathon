@@ -16,7 +16,7 @@ def load_and_normalize_data(file_path: str) -> Dict[str, pd.DataFrame]:
     for recipe in data:
         recipe_id = recipe.get("id")
 
-        # Main recipe details
+        # recipe 
         recipes_list.append({
             "id": recipe_id,
             "title": recipe.get("title"),
@@ -26,15 +26,15 @@ def load_and_normalize_data(file_path: str) -> Dict[str, pd.DataFrame]:
             "total_time": recipe.get("total_time"),
         })
 
-        # Categories (one-to-many)
+        # categories
         for cat in recipe.get("categories", []):
             categories_list.append({"recipe_id": recipe_id, "category": cat})
 
-        # Ingredients (one-to-many)
+        # ingredients
         for ing in recipe.get("ingredients", []):
             ingredients_list.append({"recipe_id": recipe_id, "ingredient": ing})
 
-        # Instructions (one-to-many)
+        # instructions
         for step in recipe.get("steps", []):
             instructions_list.append({
                 "recipe_id": recipe_id,
@@ -42,7 +42,7 @@ def load_and_normalize_data(file_path: str) -> Dict[str, pd.DataFrame]:
                 "description": step.get("instruction"),
             })
 
-        # Nutrition (one-to-one)
+        # nutrition
         nutrition = recipe.get("nutritional_information", {})
         nutrition_info = {
             key: nutrition.get(key) for key in [
@@ -55,7 +55,6 @@ def load_and_normalize_data(file_path: str) -> Dict[str, pd.DataFrame]:
         nutrition_info["recipe_id"] = recipe_id
         nutrition_list.append(nutrition_info)
 
-    # Convert lists to DataFrames
     dataframes = {
         "recipes": pd.DataFrame(recipes_list),
         "categories": pd.DataFrame(categories_list),
@@ -65,6 +64,8 @@ def load_and_normalize_data(file_path: str) -> Dict[str, pd.DataFrame]:
     }
 
     return dataframes
+
+# inspecting the dataframes
 
 # print(load_and_normalize_data('allrecipes.com_database_12042020000000.json')['recipes'])
 # print(load_and_normalize_data('allrecipes.com_database_12042020000000.json')['categories'])
