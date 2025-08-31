@@ -21,7 +21,7 @@ The AllRecipes API is a robust system for analyzing recipe data, focusing on ing
 ### Recipe Similarity Search
 
 - **TF-IDF Vectorization**: Transforms text data of recipes into a TF-IDF matrix for efficient cosine similarity computations.
-- **Comprehensive Text Fields**: Combines title, description, and normalized ingredients into a single field to maximize search efficacy.
+- **Comprehensive Text Fields**: Combines title, description, and normalized ingredients into a single field to maximize search efficiency.
 - **Similarity Computation**: Quickly compares recipes against the pre-computed matrix, returning the top matching recipes.
 
 ## Project Structure
