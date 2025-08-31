@@ -96,15 +96,3 @@ pytest
 
 - **Pre-computation**: Ensures lookup efficiency and reduces processing overhead in runtime APIs.
 - **Vectorization**: Uses combined fields and normalization for enhanced search relevance.
-
-## License
-
-This project is under the MIT License. See `LICENSE` for further details.
-
-## Author
-
-Your Name
-
-## Acknowledgments
-
-Appreciation to contributors and the open-source community for their invaluable tools and software.
